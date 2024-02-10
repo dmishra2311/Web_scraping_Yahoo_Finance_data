@@ -32,3 +32,5 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
+provide all ticker symbols of companies you wish to see for in the python execute command e.g. python scraper.py TSLA AMZN AAPL META NFLX GOOG PLNT
+
