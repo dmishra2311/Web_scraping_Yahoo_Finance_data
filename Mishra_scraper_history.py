@@ -10,8 +10,7 @@ import yfinance as yf
 from datetime import date
 def get_data(ticker_symbol: Any) -> Dict[str, Any]:
  print('Getting history data of ', ticker_symbol)
- tdg = yf.Ticker('tdg')
- tdg
+ tdg = yf.Ticker(ticker_symbol)
  data = tdg.history(interval ='1d', start = '2010-02-01', end = '2024-02-04')
  data = data.reset_index().rename(columns={"index":"date"})	
  data['Date'] = pd.to_datetime(data['Date']).dt.date
