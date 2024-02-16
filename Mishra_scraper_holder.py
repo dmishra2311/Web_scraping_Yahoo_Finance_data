@@ -52,12 +52,25 @@ def get_data(ticker_symbol: Any) -> Dict[str, Any]:
  cat2_column = df2.pop('Category')
  df2.insert(0,'Category',cat2_column)
  df2 = df2.assign(stock_name =soup.find('div', {'class':'D(ib) Mt(-5px) Maw(38%)--tab768 Maw(38%) Mend(10px) Ov(h) smartphone_Maw(85%) smartphone_Mend(0px)'}).find_all('div')[0].text.strip())
- stock2_column = df2.pop('stock_name')
- df2.insert(0,'stock_name',stock_column) 
+ stock_column = df2.pop('stock_name')
+ df2.insert(0,'stock_name',stock_column)  
 
  #merge both tables
  new_df = pd.concat([new_df, df2], ignore_index=True)
  print(new_df)
+
+ table3 = soup.find_all('table')[0]
+ soup.find('table',class_ = 'W(100%) BdB Bdc($seperatorColor)')
+ g_data = table3.find_all('tr')
+ for row in g_data[:]:
+  r_data = row.find_all('td')
+  ind_r_data = [data.text.strip() for data in r_data]
+  column1 = ind_r_data[1]
+  new_df = new_df.assign(column1 = ind_r_data[0])
+  new_df= new_df.rename(columns={"column1":column1})
+ print(new_df.head()) 
+
+
  return new_df
 
 # Check if ticker symbols are provided as command line arguments

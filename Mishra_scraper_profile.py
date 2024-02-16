@@ -59,25 +59,6 @@ def get_data(ticker_symbol: Any) -> Dict[str, Any]:
  new_df = new_df.assign(address_details = address)
  new_df = new_df.assign(description = description)
  new_df = new_df.assign(corporate_governance = corp_summ)
- #soup.find('div',class_ = 'Mb(25px)')
- #section = soup.find_all('div')[2]
- #print(section)
- #section = soup.find('div', {'class':'Pt(10px) smartphone_Pt(20px) Lh(1.7)'}).find_all('div')[0].text.strip()
- #print(section.find_all('br'))
- 
-
- 
- 
- #df2 = df2.assign(Category = soup.find('section', {'class':'Pb(30px) smartphone_Px(20px)'}).find_all('h3')[2].text.strip()) 
- #cat2_column = df2.pop('Category')
- #df2.insert(0,'Category',cat2_column)
- #df2 = df2.assign(stock_name =soup.find('div', {'class':'D(ib) Mt(-5px) Maw(38%)--tab768 Maw(38%) Mend(10px) Ov(h) smartphone_Maw(85%) smartphone_Mend(0px)'}).find_all('div')[0].text.strip())
- #stock2_column = df2.pop('stock_name')
- #df2.insert(0,'stock_name',stock_column) 
-
- #merge both tables
- #new_df = pd.concat([new_df, df2], ignore_index=True)
- #print(new_df)
  return new_df
 
 # Check if ticker symbols are provided as command line arguments
