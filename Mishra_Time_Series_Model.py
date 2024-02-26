@@ -1,36 +1,59 @@
 import pandas as pd
-import datetime
-import matplotlib.pyplot as plt
-import numpy as np
 
 df = pd.read_csv('history_data.csv')
-curr_df = df[df['stock_name'] == 'Microsoft Corporation (MSFT)'][['Date','Close']]
+
+df = df[df['stock_name'] == 'Microsoft Corporation (MSFT)'][['Date','Close']]
+#Tesla, Inc. (TSLA)
+#Ford Motor Company (F)
+
+
+#df = df[['Date','Close']]
+
+df
+
+df = df[['Date', 'Close']]
+
+df
+
+df['Date']
+
+import datetime
+
 def str_to_datetime(s):
   split = s.split('-')
   year, month, day = int(split[0]), int(split[1]), int(split[2])
   return datetime.datetime(year=year, month=month, day=day)
 
-curr_df['Date'] = pd.to_datetime(curr_df['Date'])
-curr_df.index = curr_df.pop('Date')
+datetime_object = str_to_datetime('1986-03-19')
+datetime_object
 
+df
 
-print(curr_df.head())
-curr_df.info()
-print(curr_df)
+df['Date'] = df['Date'].apply(str_to_datetime)
+df['Date']
+
+df.index = df.pop('Date')
+df
+
+import matplotlib.pyplot as plt
+
+plt.plot(df.index, df['Close'])
+
+import numpy as np
 
 def df_to_windowed_df(dataframe, first_date_str, last_date_str, n=3):
   first_date = str_to_datetime(first_date_str)
   last_date  = str_to_datetime(last_date_str)
 
   target_date = first_date
-  
+
   dates = []
   X, Y = [], []
 
   last_time = False
   while True:
     df_subset = dataframe.loc[:target_date].tail(n+1)
-    
+
     if len(df_subset) != n+1:
       print(f'Error: Window of size {n} is too large for date {target_date}')
       return
@@ -48,31 +71,32 @@ def df_to_windowed_df(dataframe, first_date_str, last_date_str, n=3):
     year_month_day = next_date_str.split('-')
     year, month, day = year_month_day
     next_date = datetime.datetime(day=int(day), month=int(month), year=int(year))
-    
+
     if last_time:
       break
-    
+
     target_date = next_date
 
     if target_date == last_date:
       last_time = True
-    
+
   ret_df = pd.DataFrame({})
   ret_df['Target Date'] = dates
-  
+
   X = np.array(X)
   for i in range(0, n):
     X[:, i]
     ret_df[f'Target-{n-i}'] = X[:, i]
-  
+
   ret_df['Target'] = Y
 
   return ret_df
 
 # Start day second time around: '2021-03-25'
-windowed_df = df_to_windowed_df(curr_df,'1987-03-25','2024-02-16',n=3)
-print(windowed_df)
-
+windowed_df = df_to_windowed_df(df,
+                                '2021-03-25','2024-02-16',
+                                n=3)
+windowed_df
 
 def windowed_df_to_date_X_y(windowed_dataframe):
   df_as_np = windowed_dataframe.to_numpy()
@@ -88,8 +112,7 @@ def windowed_df_to_date_X_y(windowed_dataframe):
 
 dates, X, y = windowed_df_to_date_X_y(windowed_df)
 
-print(dates.shape, X.shape, y.shape)
-
+dates.shape, X.shape, y.shape
 
 q_80 = int(len(dates) * .8)
 q_90 = int(len(dates) * .9)
@@ -104,31 +127,77 @@ plt.plot(dates_val, y_val)
 plt.plot(dates_test, y_test)
 
 plt.legend(['Train', 'Validation', 'Test'])
-plt.show()
-
-
-#print(windowed_df)
-
-#plt.plot(curr_df.index, curr_df['Close'])
-#plt.show()
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import layers
 
+model = Sequential([layers.Input((3, 1)),
+                    layers.LSTM(64),
+                    layers.Dense(32, activation='relu'),
+                    layers.Dense(32, activation='relu'),
+                    layers.Dense(1)])
 
-model = Sequential([layers.Input((3, 1)),layers.LSTM(64),layers.Dense(32, activation='relu'),layers.Dense(32, activation='relu'),layers.Dense(1)])
-
-model.compile(loss='mse',optimizer=Adam(learning_rate=0.001),metrics=['mean_absolute_error'])
+model.compile(loss='mse',
+              optimizer=Adam(learning_rate=0.001),
+              metrics=['mean_absolute_error'])
 
 model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=100)
-
 
 train_predictions = model.predict(X_train).flatten()
 
 plt.plot(dates_train, train_predictions)
 plt.plot(dates_train, y_train)
 plt.legend(['Training Predictions', 'Training Observations'])
-plt.show()
 
+val_predictions = model.predict(X_val).flatten()
+
+plt.plot(dates_val, val_predictions)
+plt.plot(dates_val, y_val)
+plt.legend(['Validation Predictions', 'Validation Observations'])
+
+test_predictions = model.predict(X_test).flatten()
+
+plt.plot(dates_test, test_predictions)
+plt.plot(dates_test, y_test)
+plt.legend(['Testing Predictions', 'Testing Observations'])
+
+plt.plot(dates_train, train_predictions)
+plt.plot(dates_train, y_train)
+plt.plot(dates_val, val_predictions)
+plt.plot(dates_val, y_val)
+plt.plot(dates_test, test_predictions)
+plt.plot(dates_test, y_test)
+plt.legend(['Training Predictions',
+            'Training Observations',
+            'Validation Predictions',
+            'Validation Observations',
+            'Testing Predictions',
+            'Testing Observations'])
+
+from copy import deepcopy
+
+recursive_predictions = []
+recursive_dates = np.concatenate([dates_val, dates_test])
+
+for target_date in recursive_dates:
+  last_window = deepcopy(X_train[-1])
+  next_prediction = model.predict(np.array([last_window])).flatten()
+  recursive_predictions.append(next_prediction)
+  last_window[-1] = next_prediction
+
+plt.plot(dates_train, train_predictions)
+plt.plot(dates_train, y_train)
+plt.plot(dates_val, val_predictions)
+plt.plot(dates_val, y_val)
+plt.plot(dates_test, test_predictions)
+plt.plot(dates_test, y_test)
+plt.plot(recursive_dates, recursive_predictions)
+plt.legend(['Training Predictions',
+            'Training Observations',
+            'Validation Predictions',
+            'Validation Observations',
+            'Testing Predictions',
+            'Testing Observations',
+            'Recursive Predictions'])
 
